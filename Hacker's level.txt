@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تحقق من الرمز</title>
+    <style>
+        /* أترك الـ CSS كما هو بدون تغيير */
+        body {
+            background-color: #1a1a1a;
+            color: #ccc;
+            text-align: center;
+            font-family: Arial, sans-serif;
+            margin: 0;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+        .input-container {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            width: 90vw;
+            height: 70vh;
+            max-width: 1200px;
+            background: linear-gradient(135deg, #2b2b2b, #4a4a4a);
+            border: 2px solid #ff1a1a;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: inset 0 0 10px rgba(255, 0, 0, 0.3),
+                        0 5px 15px rgba(0, 0, 0, 0.8);
+            box-sizing: border-box;
+            z-index: 1;
+        }
+        .input-container::before,
+        .input-container::after {
+            content: '';
+            position: absolute;
+            width: 15px;
+            height: 15px;
+            background: #666;
+            border-radius: 50%;
+            box-shadow: inset 0 0 3px #000;
+        }
+        .input-container::before { top: 20px; left: 20px; }
+        .input-container::after { top: 20px; right: 20px; }
+        label {
+            margin: 0;
+            color: #ff4d4d;
+            font-weight: bold;
+            font-size: 24px;
+        }
+        input[type="number"] {
+            width: 60px;
+            height: 60px;
+            text-align: center;
+            font-size: 28px;
+            background-color: #1a1a1a;
+            color: #ff4d4d;
+            border: 2px solid #ff1a1a;
+            border-radius: 5px;
+            box-shadow: inset 0 0 5px rgba(255, 0, 0, 0.5);
+        }
+        input[type="number"]:focus {
+            outline: none;
+            border-color: #ff6666;
+            box-shadow: 0 0 8px #ff1a1a;
+        }
+        button {
+            margin-top: 20px;
+            padding: 15px 30px;
+            font-size: 20px;
+            background-color: #ff1a1a;
+            border: none;
+            color: #fff;
+            border-radius: 5px;
+            cursor: pointer;
+            box-shadow: 0 3px 10px rgba(255, 0, 0, 0.5);
+            z-index: 1;
+        }
+        button:hover {
+            background-color: #ff3333;
+        }
+        button:disabled {
+            background-color: #666;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+        #successMessage {
+            display: none;
+            color: #00cc00;
+            font-size: 32px;
+            text-align: center;
+            margin-top: 20px;
+            z-index: 1;
+        }
+        #errorMessage, #attemptsLeftMessage, #explosionMessage, #lockoutMessage {
+            display: none;
+            color: #ff4d4d;
+            font-size: 24px;
+            text-align: center;
+            margin-top: 20px;
+            z-index: 1;
+        }
+        @keyframes shake {
+            0% { transform: translate(0, 0); }
+            10% { transform: translate(-35px, 25px); }
+            20% { transform: translate(35px, -25px); }
+            30% { transform: translate(-30px, 20px); }
+            40% { transform: translate(30px, -20px); }
+            50% { transform: translate(-25px, 15px); }
+            60% { transform: translate(25px, -15px); }
+            70% { transform: translate(-20px, 10px); }
+            80% { transform: translate(20px, -10px); }
+            90% { transform: translate(-15px, 5px); }
+            100% { transform: translate(0, 0); }
+        }
+        .explode {
+            animation: shake 0.7s ease-in-out;
+        }
+        #particles-js {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 999;
+            display: none;
+            background: rgba(0, 0, 0, 0.6);
+        }
+        #heatOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to bottom, rgba(255, 69, 0, 0.1), rgba(255, 255, 0, 0.1), transparent);
+            opacity: 0;
+            z-index: 998;
+            pointer-events: none;
+        }
+        @keyframes heatWave {
+            0% { transform: translateY(0) skewX(0deg); opacity: 0.5; }
+            50% { transform: translateY(-20px) skewX(2deg); opacity: 0.3; }
+            100% { transform: translateY(-40px) skewX(0deg); opacity: 0; }
+        }
+        .heat-active {
+            animation: heatWave 1.5s infinite;
+            opacity: 0.5;
+        }
+        #crackedScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.2), rgba(0, 0, 0, 0.9));
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%"><path d="M0 0 L50 50 L100 20 L150 80 L200 30 L250 90 L300 40 L350 100 L400 60 L450 10 L500 70 L550 30 L600 90 L650 50" stroke="rgba(255,255,255,0.5)" stroke-width="7" fill="none"/><path d="M10 90 L60 40 L110 70 L160 20 L210 80 L260 30 L310 60 L360 10 L410 70" stroke="rgba(255,255,255,0.4)" stroke-width="6" fill="none"/><path d="M20 20 L70 60 L120 30 L170 90 L220 50 L270 80" stroke="rgba(255,255,255,0.3)" stroke-width="5" fill="none"/></svg>');
+            background-size: cover;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 1001;
+        }
+        @keyframes crackFade {
+            0% { opacity: 1; }
+            80% { opacity: 0.9; }
+            100% { opacity: 0; }
+        }
+        @media (max-width: 768px) {
+            .input-container {
+                width: 100vw;
+                height: 50vh;
+                padding: 10px;
+                flex-wrap: wrap;
+            }
+            label { font-size: 18px; }
+            input[type="number"] {
+                width: 50px;
+                height: 50px;
+                font-size: 22px;
+            }
+            button {
+                padding: 10px 20px;
+                font-size: 16px;
+            }
+            #successMessage { font-size: 24px; }
+            #errorMessage, #attemptsLeftMessage, #explosionMessage, #lockoutMessage { font-size: 18px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="input-container">
+        <label>رقم 1: <input type="number" id="digit1" min="0" max="9"></label>
+        <label>رقم 2: <input type="number" id="digit2" min="0" max="9"></label>
+        <label>رقم 3: <input type="number" id="digit3" min="0" max="9"></label>
+        <label>رقم 4: <input type="number" id="digit4" min="0" max="9"></label>
+        <label>رقم 5: <input type="number" id="digit5" min="0" max="9"></label>
+    </div>
+    <button id="checkButton">تحقق</button>
+    <div id="successMessage">✓ مبروك فوز الليفل!</div>
+    <div id="errorMessage">الرمز غير صحيح، حاول مرة أخرى.</div>
+    <div id="attemptsLeftMessage"></div> <!-- عنصر جديد لعرض المحاولات المتبقية -->
+    <div id="explosionMessage">💥 القنبلة انفجرت!</div>
+    <div id="lockoutMessage">لم يعد بإمكانك الدخول!</div>
+    <div id="heatOverlay"></div>
+    <div id="particles-js"></div>
+    <div id="crackedScreen"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <script>
+        const checkButton = document.getElementById('checkButton');
+        const particlesContainer = document.getElementById('particles-js');
+        const heatOverlay = document.getElementById('heatOverlay');
+        const crackedScreen = document.getElementById('crackedScreen');
+        const inputs = document.querySelectorAll('input[type="number"]');
+        const maxAttempts = 3;
+
+        // تحميل الحالة من localStorage
+        let attempts = parseInt(localStorage.getItem('attempts')) || 0;
+        let gameState = localStorage.getItem('gameState') || 'active'; // 'active', 'won', 'locked'
+
+        const realisticFireConfig = {
+            particles: {
+                number: { value: 400, density: { enable: true, value_area: 800 } },
+                color: { value: ["#ff4500", "#ff8c00", "#ffff00", "#ff0000", "#b22222", "#666666", "#333333"] },
+                shape: { type: ["circle", "triangle", "edge"], stroke: { width: 0 } },
+                opacity: { value: 0.9, random: true, anim: { enable: true, speed: 3, opacity_min: 0.2 } },
+                size: { value: 8, random: true, anim: { enable: true, speed: 20, size_min: 0.5 } },
+                line_linked: { enable: false },
+                move: {
+                    enable: true,
+                    speed: 12,
+                    direction: "top",
+                    random: true,
+                    straight: false,
+                    out_mode: "out",
+                    bounce: false,
+                    attract: { enable: false }
+                }
+            },
+            interactivity: { detect_on: "canvas", events: { onhover: { enable: false }, onclick: { enable: false } } },
+            retina_detect: true
+        };
+
+        function disableInputsAndButton() {
+            inputs.forEach(input => {
+                input.disabled = true;
+                input.style.backgroundColor = '#333';
+                input.style.borderColor = '#666';
+                input.style.color = '#999';
+            });
+            checkButton.disabled = true;
+            checkButton.style.backgroundColor = '#666';
+        }
+
+        // التحقق من الحالة عند التحميل
+        if (gameState === 'won') {
+            document.getElementById('successMessage').style.display = 'block';
+            document.getElementById('errorMessage').style.display = 'none';
+            document.getElementById('attemptsLeftMessage').style.display = 'none';
+            document.getElementById('explosionMessage').style.display = 'none';
+            document.getElementById('lockoutMessage').style.display = 'none';
+            document.body.style.backgroundColor = '#0a3d0a';
+            disableInputsAndButton();
+        } else if (gameState === 'locked') {
+            document.getElementById('lockoutMessage').style.display = 'block';
+            document.getElementById('successMessage').style.display = 'none';
+            document.getElementById('errorMessage').style.display = 'none';
+            document.getElementById('attemptsLeftMessage').style.display = 'none';
+            document.getElementById('explosionMessage').style.display = 'none';
+            document.body.style.backgroundColor = '#1a1a1a';
+            disableInputsAndButton();
+        }
+
+        checkButton.addEventListener('click', function() {
+            if (gameState !== 'active' || checkButton.disabled) return;
+
+            const digit1 = document.getElementById('digit1').value;
+            const digit2 = document.getElementById('digit2').value;
+            const digit3 = document.getElementById('digit3').value;
+            const digit4 = document.getElementById('digit4').value;
+            const digit5 = document.getElementById('digit5').value;
+            const code = digit1 + digit2 + digit3 + digit4 + digit5;
+
+            if (code === "19472") {
+                document.getElementById('successMessage').style.display = 'block';
+                document.getElementById('errorMessage').style.display = 'none';
+                document.getElementById('attemptsLeftMessage').style.display = 'none';
+                document.getElementById('explosionMessage').style.display = 'none';
+                document.getElementById('lockoutMessage').style.display = 'none';
+                document.body.style.backgroundColor = '#0a3d0a';
+                confetti({
+                    particleCount: 300,
+                    spread: 120,
+                    origin: { y: 0.5 },
+                    colors: ['#ff0000', '#00ff00', '#0000ff'],
+                    angle: 90,
+                    drift: 1
+                });
+                setTimeout(() => confetti({
+                    particleCount: 200,
+                    spread: 90,
+                    origin: { y: 0.7 }
+                }), 500);
+                gameState = 'won';
+                localStorage.setItem('gameState', 'won');
+                disableInputsAndButton();
+            } else {
+                attempts++;
+                localStorage.setItem('attempts', attempts);
+
+                if (attempts >= maxAttempts) {
+                    document.getElementById('explosionMessage').style.display = 'block';
+                    document.getElementById('errorMessage').style.display = 'none';
+                    document.getElementById('attemptsLeftMessage').style.display = 'none';
+                    document.getElementById('successMessage').style.display = 'none';
+                    document.getElementById('lockoutMessage').style.display = 'none';
+                    document.body.classList.add('explode');
+
+                    particlesContainer.style.display = 'block';
+                    particlesJS('particles-js', realisticFireConfig);
+                    heatOverlay.classList.add('heat-active');
+                    crackedScreen.style.opacity = '1';
+                    crackedScreen.style.animation = 'crackFade 3.5s ease-out forwards';
+                    document.body.style.backgroundColor = '#1a1a1a';
+
+                    setTimeout(() => {
+                        document.body.classList.remove('explode');
+                        particlesContainer.style.display = 'none';
+                        heatOverlay.classList.remove('heat-active');
+                        crackedScreen.style.opacity = '0';
+                        crackedScreen.style.animation = 'none';
+                        document.getElementById('explosionMessage').style.display = 'none';
+                        document.getElementById('lockoutMessage').style.display = 'block';
+                        gameState = 'locked';
+                        localStorage.setItem('gameState', 'locked');
+                        disableInputsAndButton();
+                    }, 3500);
+                } else {
+                    document.getElementById('errorMessage').style.display = 'block';
+                    document.getElementById('attemptsLeftMessage').style.display = 'block';
+                    document.getElementById('successMessage').style.display = 'none';
+                    document.getElementById('explosionMessage').style.display = 'none';
+                    document.getElementById('lockoutMessage').style.display = 'none';
+                    document.body.style.backgroundColor = '#1a1a1a';
+
+                    // تحديث رسالة المحاولات المتبقية
+                    const attemptsLeft = maxAttempts - attempts;
+                    document.getElementById('attemptsLeftMessage').textContent = 
+                        attemptsLeft === 2 ? 'تبقى محاولتان' : 'تبقى محاولة واحدة';
+                }
+            }
+        });
+    </script>
+</body>
+</html>
